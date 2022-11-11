@@ -1,10 +1,10 @@
-﻿namespace EventService.Models
+﻿namespace LumaEventService.Models
 {
     public class Event
     {
-        public int EventId { get; set; }
+        public string EventId { get; set; }
         public string Title { get; set; }
-        public DateTime UtcEventDateStart { get; set; }
-        public DateTime UtcEventDateEnd { get; set; }
+        public DateTime EventUtcDateStart { get; set; }
+        public DateTime EventUtcDateEnd { get; set; }
     }
 }

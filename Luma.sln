@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventService", "LumaAPI\EventService.csproj", "{DB0920C8-386B-42B8-9328-B8C1C456BD09}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LumaEventService", "LumaAPI\LumaEventService.csproj", "{DB0920C8-386B-42B8-9328-B8C1C456BD09}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F4599BF7-0EC2-4E27-B3D3-C6D2493E8EE4}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,19 +1,29 @@
 ﻿using AutoMapper;
-using EventService.Models;
+using LumaEventService.Models;
+using LumaEventService.Models.DTO;
 
-namespace EventService.Mapping
+namespace LumaEventService.Mapping
 {
     public class MappingConfiguration : Profile
     {
         public MappingConfiguration()
         {
-            CreateMap<Event, EventDTO>()
-                .ForMember(dest => dest.UserEventDateStart, opt => opt.MapFrom(src => src.UtcEventDateStart.ToLocalTime()))
-                .ForMember(dest => dest.UserEventDateEnd, opt => opt.MapFrom(src => src.UtcEventDateEnd.ToLocalTime()));
+            CreateMap<Event, ReadEventDTO>()
+                .ForMember(dest => dest.EventLocalDateStart, opt => opt.MapFrom(src => src.EventUtcDateStart.ToLocalTime()))
+                .ForMember(dest => dest.EventLocalDateEnd, opt => opt.MapFrom(src => src.EventUtcDateEnd.ToLocalTime()));
 
-            CreateMap<EventDTO, Event>()
-                .ForMember(dest => dest.UtcEventDateStart, opt => opt.MapFrom(src => src.UserEventDateStart.ToUniversalTime()))
-                .ForMember(dest => dest.UtcEventDateEnd, opt => opt.MapFrom(src => src.UserEventDateEnd.ToUniversalTime()));                
+            // Método ToUniversalTime bugado na versão 6.0 do dotnet 
+            /*
+            CreateMap<ReadEventDTO, Event>()
+                .ForMember(dest => dest.EventUtcDateStart, opt => opt.MapFrom(src => src.EventLocalDateStart.ToUniversalTime()))
+                .ForMember(dest => dest.EventUtcDateEnd, opt => opt.MapFrom(src => src.EventLocalDateEnd.ToUniversalTime())); 
+            */
+
+            CreateMap<ReadEventDTO, Event>()
+                .ForMember(dest => dest.EventUtcDateStart, opt => opt.MapFrom(src => 
+                    (TimeZoneInfo.Local.BaseUtcOffset.Hours >= 0) ? src.EventLocalDateStart.AddHours(TimeZoneInfo.Local.BaseUtcOffset.Hours) : src.EventLocalDateStart.AddHours(-TimeZoneInfo.Local.BaseUtcOffset.Hours)))
+                .ForMember(dest => dest.EventUtcDateEnd, opt => opt.MapFrom(src =>
+                    (TimeZoneInfo.Local.BaseUtcOffset.Hours >= 0) ? src.EventLocalDateEnd.AddHours(TimeZoneInfo.Local.BaseUtcOffset.Hours) : src.EventLocalDateEnd.AddHours(-TimeZoneInfo.Local.BaseUtcOffset.Hours)));
         }
     }
 }
