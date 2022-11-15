@@ -13,19 +13,19 @@ namespace LumaEventService.Data
             _context = context;
         }
 
-        public IEnumerable<Event> GetAllEvents()
+        public IEnumerable<Event> GetAllEvents(string? loggedInUsername)
         {
-            return _context.LumaEvents.AsNoTracking();
+            return _context.LumaEvents.AsNoTracking().Where(x => x.UserName == loggedInUsername);
         }
 
-        public IEnumerable<Event> GetNextEvents()
+        public IEnumerable<Event> GetNextEvents(string? loggedInUsername)
         {
-            return _context.LumaEvents.AsNoTracking().Where(x => x.EventUtcDateStart > DateTime.UtcNow);
+            return _context.LumaEvents.AsNoTracking().Where(x => x.EventUtcDateStart > DateTime.UtcNow && x.UserName == loggedInUsername);
         }
 
-        public Event GetEventById(string eventId)
+        public Event GetEventById(string eventId, string? loggedInUsername)
         {
-            return _context.LumaEvents.AsNoTracking().FirstOrDefault(x => x.EventId == eventId);
+            return _context.LumaEvents.AsNoTracking().Where(x => x.UserName == loggedInUsername).FirstOrDefault(x => x.EventId == eventId);
         }
 
         public void AddNewEvent(Event userEvent)
@@ -47,9 +47,9 @@ namespace LumaEventService.Data
             _context.SaveChanges();
         }
 
-        public Event GetEventByDateAndUser(Event userEvent)
+        public Event GetEventByDateAndUser(Event userEvent, string? loggedInUsername)
         {
-            return _context.LumaEvents.AsNoTracking().FirstOrDefault(x => 
+            return _context.LumaEvents.AsNoTracking().Where(x => x.UserName == loggedInUsername).FirstOrDefault(x =>
                 (x.EventUtcDateStart <= userEvent.EventUtcDateStart && x.EventUtcDateEnd >= userEvent.EventUtcDateStart) ||
                 (x.EventUtcDateStart <= userEvent.EventUtcDateEnd && x.EventUtcDateEnd >= userEvent.EventUtcDateEnd));
         }

@@ -17,11 +17,11 @@ namespace LumaEventService.Services
             _mapper = mapper;
         }
 
-        public IEnumerable<ReadEventDTO> GetAllEvents()
+        public IEnumerable<ReadEventDTO> GetAllEvents(string? loggedInUsername)
         {
             try
             {
-                IEnumerable<Event> eventsList = _eventRepository.GetAllEvents();
+                IEnumerable<Event> eventsList = _eventRepository.GetAllEvents(loggedInUsername);
                 return _mapper.Map<IEnumerable<ReadEventDTO>>(eventsList);
             }
             catch (Exception)
@@ -30,11 +30,11 @@ namespace LumaEventService.Services
             }
         }
 
-        public IEnumerable<ReadEventDTO> GetNextEvents()
+        public IEnumerable<ReadEventDTO> GetNextEvents(string? loggedInUsername)
         {
             try
             {
-                IEnumerable<Event> eventsList = _eventRepository.GetNextEvents();
+                IEnumerable<Event> eventsList = _eventRepository.GetNextEvents(loggedInUsername);
                 return _mapper.Map<IEnumerable<ReadEventDTO>>(eventsList);
             }
             catch (Exception)
@@ -43,11 +43,11 @@ namespace LumaEventService.Services
             }
         }
 
-        public ReadEventDTO GetEventById(string eventId)
+        public ReadEventDTO GetEventById(string eventId, string? loggedInUsername)
         {
             try
             {
-                Event userEvent = _eventRepository.GetEventById(eventId);
+                Event userEvent = _eventRepository.GetEventById(eventId, loggedInUsername);
                 return _mapper.Map<ReadEventDTO>(userEvent);
             }
             catch (Exception)
@@ -56,17 +56,18 @@ namespace LumaEventService.Services
             }
         }
 
-        public void AddNewEvent(ReadEventDTO userEvent)
+        public void AddNewEvent(ReadEventDTO userEvent, string? loggedInUsername)
         {
             try
             {
                 if (string.IsNullOrEmpty(userEvent.Title.Trim())) userEvent.Title = "Sem título";
-                
+
                 Event utcUserEvent = _mapper.Map<Event>(userEvent);
+                utcUserEvent.UserName = loggedInUsername;
 
                 ValidateEventStartDate(utcUserEvent.EventUtcDateStart);
                 ValidateEventEndDate(utcUserEvent.EventUtcDateStart, utcUserEvent.EventUtcDateEnd);
-                ValidateConcurrentEvent(utcUserEvent);
+                ValidateConcurrentEvent(utcUserEvent, loggedInUsername);
 
                 _eventRepository.AddNewEvent(utcUserEvent);
             }
@@ -80,18 +81,19 @@ namespace LumaEventService.Services
             }
         }
 
-        public ReadEventDTO UpdateEvent(string eventId, ReadEventDTO userEvent)
+        public ReadEventDTO UpdateEvent(string eventId, ReadEventDTO userEvent, string? loggedInUsername)
         {
             try
             {
                 ValidateEventStartDate(userEvent.EventLocalDateStart.ToUniversalTime());
                 ValidateEventEndDate(userEvent.EventLocalDateStart, userEvent.EventLocalDateEnd);
 
-                if (GetEventById(eventId) == null)
+                if (GetEventById(eventId, loggedInUsername) == null)
                     return null;
 
                 Event updatedEvent = _mapper.Map<Event>(userEvent);
                 updatedEvent.EventId = eventId;
+                updatedEvent.UserName = loggedInUsername;
 
                 _eventRepository.UpdateEvent(updatedEvent);
                 return userEvent;
@@ -102,11 +104,11 @@ namespace LumaEventService.Services
             }
         }
 
-        public ReadEventDTO RemoveEvent(string eventId)
+        public ReadEventDTO RemoveEvent(string eventId, string? loggedInUsername)
         {
             try
             {
-                ReadEventDTO userEvent = GetEventById(eventId);
+                ReadEventDTO userEvent = GetEventById(eventId, loggedInUsername);
 
                 if (userEvent != null)
                     _eventRepository.RemoveEvent(_mapper.Map<Event>(userEvent));
@@ -131,9 +133,9 @@ namespace LumaEventService.Services
                 throw new ArgumentException("Data fim não pode ser anterior a data de início!");
         }
 
-        private void ValidateConcurrentEvent(Event utcUserEvent)
+        private void ValidateConcurrentEvent(Event utcUserEvent, string? loggedInUsername)
         {
-            Event concurrentEvent = _eventRepository.GetEventByDateAndUser(utcUserEvent);
+            Event concurrentEvent = _eventRepository.GetEventByDateAndUser(utcUserEvent, loggedInUsername);
 
             if (concurrentEvent != null)
                 throw new ArgumentException(JsonSerializer.Serialize(new { Message = "Já existe um evento cadastrado nesta data!", Evento = _mapper.Map<ReadEventDTO>(concurrentEvent) }));

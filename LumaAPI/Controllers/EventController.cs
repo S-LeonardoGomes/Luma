@@ -1,5 +1,6 @@
 ﻿using LumaEventService.Models.DTO;
 using LumaEventService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LumaEventService.Controllers
@@ -16,11 +17,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpGet("AllEvents")]
+        [Authorize(Roles = "Common")]
         public IActionResult GetAllEvents()
         {
             try
             {
-                IEnumerable<ReadEventDTO> eventsList = _eventService.GetAllEvents();
+                string? loggedInUsername = User.Identity.Name;
+                IEnumerable<ReadEventDTO> eventsList = _eventService.GetAllEvents(loggedInUsername);
 
                 if (eventsList == null) return NoContent();
 
@@ -33,11 +36,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpGet("NextEvents")]
+        [Authorize(Roles = "Common")]
         public IActionResult GetNextEvents()
         {
             try
             {
-                IEnumerable<ReadEventDTO> eventsList = _eventService.GetNextEvents();
+                string? loggedInUsername = User.Identity.Name;
+                IEnumerable<ReadEventDTO> eventsList = _eventService.GetNextEvents(loggedInUsername);
 
                 if (eventsList == null) return NoContent();
 
@@ -50,11 +55,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpGet("EventById/{id}", Name = "GetEventById")]
+        [Authorize(Roles = "Common")]
         public IActionResult GetEventById([FromRoute] string id)
         {
             try
             {
-                ReadEventDTO userEvent = _eventService.GetEventById(id);
+                string? loggedInUsername = User.Identity.Name;
+                ReadEventDTO userEvent = _eventService.GetEventById(id, loggedInUsername);
 
                 if (userEvent == null) return NoContent();
 
@@ -67,11 +74,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpPost("AddEvent")]
+        [Authorize(Roles = "Common")]
         public IActionResult AddNewEvent([FromBody] ReadEventDTO newEvent)
         {
             try
             {
-                _eventService.AddNewEvent(newEvent);
+                string? loggedInUsername = User.Identity.Name;
+                _eventService.AddNewEvent(newEvent, loggedInUsername);
                 return CreatedAtRoute("GetEventById", routeValues: new { Id = newEvent.EventId }, value: newEvent);
             }
             catch (ArgumentException ex)
@@ -85,11 +94,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpPut("UpdateEvent/{id}")]
+        [Authorize(Roles = "Common")]
         public IActionResult UpdateEvent([FromRoute] string id, [FromBody] ReadEventDTO userEvent)
         {
             try
             {
-                ReadEventDTO updatedEvent = _eventService.UpdateEvent(id, userEvent);
+                string? loggedInUsername = User.Identity.Name;
+                ReadEventDTO updatedEvent = _eventService.UpdateEvent(id, userEvent, loggedInUsername);
                 if (updatedEvent == null) return NotFound($"Evento #{id} não encontrado!");
 
                 return Ok(updatedEvent);
@@ -105,11 +116,13 @@ namespace LumaEventService.Controllers
         }
 
         [HttpDelete("RemoveEvent/{id}")]
+        [Authorize(Roles = "Common")]
         public IActionResult RemoveEvent([FromRoute] string id)
         {
             try
             {
-                ReadEventDTO removedEvent = _eventService.RemoveEvent(id);
+                string? loggedInUsername = User.Identity.Name;
+                ReadEventDTO removedEvent = _eventService.RemoveEvent(id, loggedInUsername);
                 if (removedEvent == null) return NotFound($"Evento #{id} não encontrado!");
 
                 return Ok(removedEvent);
