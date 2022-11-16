@@ -155,7 +155,7 @@ namespace LumaEventService.Services
                     TextContent = $"Seu evento \"{userEvent.Title}\" iniciará em três horas. Não perca!",
                     Recipient = userEvent.Email,
                     RecipientUserName = userEvent.UserName,
-                    SendAtUTC = ((DateTimeOffset)userEvent.EventUtcDateStart.AddHours(-3)).Ticks
+                    SendAtUTC = ((DateTimeOffset)userEvent.EventUtcDateStart.AddHours(-3)).ToUnixTimeSeconds()
                 };
 
                 string emailMessage = JsonSerializer.Serialize(email);
