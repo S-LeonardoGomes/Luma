@@ -151,7 +151,7 @@ namespace LumaEventService.Services
             {
                 Email email = new()
                 {
-                    Subject = "Confirme seu e-mail",
+                    Subject = "Lembrete",
                     TextContent = $"Seu evento \"{userEvent.Title}\" iniciará em três horas. Não perca!",
                     Recipient = userEvent.Email,
                     RecipientUserName = userEvent.UserName,
