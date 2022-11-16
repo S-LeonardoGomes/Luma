@@ -5,6 +5,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
 using LumaAuthenticationService.Data;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace LumaAuthenticationService.Services
 {
@@ -12,11 +14,13 @@ namespace LumaAuthenticationService.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IAuthenticationRepository _authenticationRepository;
+        private readonly IRabbitMqService _rabbitMqService;
 
-        public AuthenticationService(IConfiguration configuration, IAuthenticationRepository authenticationRepository)
+        public AuthenticationService(IConfiguration configuration, IAuthenticationRepository authenticationRepository, IRabbitMqService rabbitMqService)
         {
             _configuration = configuration;
             _authenticationRepository = authenticationRepository;
+            _rabbitMqService = rabbitMqService;
         }
 
         public string GenerateToken(User user)
@@ -29,7 +33,8 @@ namespace LumaAuthenticationService.Services
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Role, user.Role)
+                    new Claim(ClaimTypes.Role, user.Role),
+                    new Claim(ClaimTypes.Email, user.Email)
                 }),
                 Expires = DateTime.UtcNow.AddHours(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(secret), SecurityAlgorithms.HmacSha256Signature)
@@ -55,6 +60,8 @@ namespace LumaAuthenticationService.Services
                 ValidatePasswordLength(user.Password.Trim());
                 user.Password = Encrypt(user.Password.Trim());
                 _authenticationRepository.RegisterUser(user);
+
+                SendConfirmationEmail(GetUserByUsername(user.UserName.Trim()));
             }
             catch (Exception)
             {
@@ -174,6 +181,28 @@ namespace LumaAuthenticationService.Services
         {
             if (username.Length < 5)
                 throw new ArgumentException("O username deve conter ao menos 5 caracteres!");
+        }
+
+        private void SendConfirmationEmail(User user)
+        {
+            try
+            {
+                Email email = new()
+                {
+                    Subject = "Confirme seu e-mail",
+                    TextContent = $"Utilize o id a seguir para confirmar seu e-mail: {user.UserId}",
+                    Recipient = user.Email,
+                    RecipientUserName = user.UserName,
+                    SendAtUTC = 0
+                };
+
+                string emailMessage = JsonSerializer.Serialize(email);
+                _rabbitMqService.PublishMessage(emailMessage, RabbitMqQueueNames.EMAIL_QUEUE.ToString());
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

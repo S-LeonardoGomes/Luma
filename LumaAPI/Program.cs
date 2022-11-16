@@ -10,8 +10,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddDbContext<EventServiceContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("EventServiceConnection")));
 builder.Services.AddAutoMapper(new[] { typeof(MappingConfiguration).Assembly });
 builder.Services.AddControllers();
@@ -37,8 +35,8 @@ builder.Services.AddAuthentication(x =>
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddSingleton<IRabbitMqService, RabbitMqService>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opt =>
 {
@@ -63,7 +61,7 @@ builder.Services.AddSwaggerGen(opt =>
                     Id="Bearer"
                 }
             },
-            new string[]{}
+            Array.Empty<string>()
         }
     });
 });
@@ -71,11 +69,9 @@ builder.Services.AddSwaggerGen(opt =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
@@ -86,5 +82,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+/*
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<EventServiceContext>();
+    db.Database.Migrate();
+}
+*/
 
 app.Run();

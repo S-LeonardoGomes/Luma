@@ -41,7 +41,7 @@ namespace LumaAuthenticationService.Controllers
             try
             {
                 _authenticationService.ConfirmEmail(userId);
-                return Ok("Email confirmado com sucesso!");
+                return Ok("E-mail confirmado com sucesso!");
             }
             catch(ArgumentException ex)
             {

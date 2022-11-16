@@ -2,6 +2,7 @@
 using LumaEventService.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace LumaEventService.Controllers
 {
@@ -80,7 +81,8 @@ namespace LumaEventService.Controllers
             try
             {
                 string? loggedInUsername = User.Identity.Name;
-                _eventService.AddNewEvent(newEvent, loggedInUsername);
+                string userEmail = User.FindFirst(ClaimTypes.Email).Value;
+                _eventService.AddNewEvent(newEvent, loggedInUsername, userEmail);
                 return CreatedAtRoute("GetEventById", routeValues: new { Id = newEvent.EventId }, value: newEvent);
             }
             catch (ArgumentException ex)

@@ -10,11 +10,13 @@ namespace LumaEventService.Services
     {
         private readonly IEventRepository _eventRepository;
         private readonly IMapper _mapper;
+        private readonly IRabbitMqService _rabbitMqService;
 
-        public EventService(IEventRepository eventRepository, IMapper mapper)
+        public EventService(IEventRepository eventRepository, IMapper mapper, IRabbitMqService rabbitMqService)
         {
             _eventRepository = eventRepository;
             _mapper = mapper;
+            _rabbitMqService = rabbitMqService;
         }
 
         public IEnumerable<ReadEventDTO> GetAllEvents(string? loggedInUsername)
@@ -56,7 +58,7 @@ namespace LumaEventService.Services
             }
         }
 
-        public void AddNewEvent(ReadEventDTO userEvent, string? loggedInUsername)
+        public void AddNewEvent(ReadEventDTO userEvent, string? loggedInUsername, string userEmail)
         {
             try
             {
@@ -64,12 +66,14 @@ namespace LumaEventService.Services
 
                 Event utcUserEvent = _mapper.Map<Event>(userEvent);
                 utcUserEvent.UserName = loggedInUsername;
+                utcUserEvent.Email = userEmail;
 
                 ValidateEventStartDate(utcUserEvent.EventUtcDateStart);
                 ValidateEventEndDate(utcUserEvent.EventUtcDateStart, utcUserEvent.EventUtcDateEnd);
                 ValidateConcurrentEvent(utcUserEvent, loggedInUsername);
 
                 _eventRepository.AddNewEvent(utcUserEvent);
+                SendNotificationEmail(utcUserEvent);
             }
             catch (ArgumentException)
             {
@@ -139,6 +143,28 @@ namespace LumaEventService.Services
 
             if (concurrentEvent != null)
                 throw new ArgumentException(JsonSerializer.Serialize(new { Message = "Já existe um evento cadastrado nesta data!", Evento = _mapper.Map<ReadEventDTO>(concurrentEvent) }));
+        }
+
+        private void SendNotificationEmail(Event userEvent)
+        {
+            try
+            {
+                Email email = new()
+                {
+                    Subject = "Confirme seu e-mail",
+                    TextContent = $"Seu evento \"{userEvent.Title}\" iniciará em três horas. Não perca!",
+                    Recipient = userEvent.Email,
+                    RecipientUserName = userEvent.UserName,
+                    SendAtUTC = ((DateTimeOffset)userEvent.EventUtcDateStart.AddHours(-3)).Ticks
+                };
+
+                string emailMessage = JsonSerializer.Serialize(email);
+                _rabbitMqService.PublishMessage(emailMessage, RabbitMqQueueNames.EMAIL_QUEUE.ToString());
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }
