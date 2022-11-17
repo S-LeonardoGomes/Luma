@@ -22,7 +22,16 @@ namespace LumaEmailService.RabbitMqService
             _configuration = options.Value;
             ConnectionFactory factory = new()
             {
-                HostName = _configuration.Host
+                HostName = _configuration.Host,
+                Port = AmqpTcpEndpoint.UseDefaultPort,
+                UserName = "luma",
+                Password = "RabbitMQ2022",
+                RequestedHeartbeat = TimeSpan.FromSeconds(60),
+                Ssl =
+                {
+                    ServerName = _configuration.Host,
+                    Enabled = false
+                }
             };
 
             _connection = factory.CreateConnection();

@@ -85,7 +85,7 @@ namespace LumaEventService.Services
             }
         }
 
-        public ReadEventDTO UpdateEvent(string eventId, ReadEventDTO userEvent, string? loggedInUsername)
+        public ReadEventDTO UpdateEvent(string eventId, ReadEventDTO userEvent, string? loggedInUsername, string userEmail)
         {
             try
             {
@@ -98,6 +98,7 @@ namespace LumaEventService.Services
                 Event updatedEvent = _mapper.Map<Event>(userEvent);
                 updatedEvent.EventId = eventId;
                 updatedEvent.UserName = loggedInUsername;
+                updatedEvent.Email = userEmail;
 
                 _eventRepository.UpdateEvent(updatedEvent);
                 return userEvent;

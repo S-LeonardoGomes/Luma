@@ -102,7 +102,8 @@ namespace LumaEventService.Controllers
             try
             {
                 string? loggedInUsername = User.Identity.Name;
-                ReadEventDTO updatedEvent = _eventService.UpdateEvent(id, userEvent, loggedInUsername);
+                string userEmail = User.FindFirst(ClaimTypes.Email).Value;
+                ReadEventDTO updatedEvent = _eventService.UpdateEvent(id, userEvent, loggedInUsername, userEmail);
                 if (updatedEvent == null) return NotFound($"Evento #{id} não encontrado!");
 
                 return Ok(updatedEvent);

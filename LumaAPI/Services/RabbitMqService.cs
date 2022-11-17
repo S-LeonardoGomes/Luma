@@ -6,25 +6,24 @@ namespace LumaEventService.Services
     public class RabbitMqService : IRabbitMqService
     {
         private readonly IConfiguration _configuration;
-        private readonly IConnection _connection;
-        private readonly IModel _channel;
 
         public RabbitMqService(IConfiguration configuration)
         {
-            _configuration = configuration;
-            _connection = new ConnectionFactory()
-            {
-                HostName = _configuration["RabbitMqConfiguration:Host"]
-            }.CreateConnection();
-
-            _channel = _connection.CreateModel();
+            _configuration = configuration;  
         }
 
         public void PublishMessage(string message, string queueName)
         {
-            using (_connection)
+            using (var _connection = new ConnectionFactory()
             {
-                using (_channel)
+                HostName = _configuration["RabbitMqConfiguration:Host"],
+                Port = AmqpTcpEndpoint.UseDefaultPort,
+                UserName = "luma",
+                Password = "RabbitMQ2022",
+                RequestedHeartbeat = TimeSpan.FromSeconds(60)
+            }.CreateConnection())
+            {
+                using (var _channel = _connection.CreateModel())
                 {
                     _channel.QueueDeclare(
                         queue: queueName,
